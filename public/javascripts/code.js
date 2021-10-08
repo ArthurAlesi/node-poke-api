@@ -1,57 +1,40 @@
 function getPokemonUrl(id) { return `https://pokeapi.co/api/v2/pokemon/${id}` }
-const fetchPokemon = () => {
 
-    
 
-    const pokemonPromises = []
+const generatePokemonPromises = () => Array(151).fill().map((_, index) =>
+    fetch(getPokemonUrl(index + 1))
+        .then(
+            response => {
+                return response.json()
+            })
+)
 
-    // fetch 151 vezes, 1 para cada pokemon
-    for (let i = 1; i <= 151; i++) {
-        pokemonPromises.push(fetch(getPokemonUrl(i))
-            .then(
-                response => {
-                    return response.json()
-                }
-            )
-           
-        )
 
-    }
-
-    Promise.all(pokemonPromises)
-        .then(pokemons => {
-            // console.log(pokemons)
-            const listPokemons = pokemons.reduce((accumulator, pokemon) => {
-                const types = pokemon.types.map(typeInfo => typeInfo.type.name)
-
-                accumulator += 
-                `<li class="card ${types[0]}">
-                <img class="card-image " id="${pokemon.id}" onclick='trocarShiny(${pokemon.id})' alt="${pokemon.name}" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png"  />
-                    <h2 class="card-title">${pokemon.id}: ${pokemon.name}</h2>
-                    <p class="card-Subtitle"> ${types.join(' | ')} </p>
-                </li>`
-                return accumulator
-            }, '')
-
-            const ul = document.querySelector('[data-js="pokedex"]')
-
-            ul.innerHTML = listPokemons
-            console.log(ul)
-            // console.log(listPokemons)
-        })
-
-    // fetch(getPokemonUrl())
-    //     .then(
-    //         response => {
-    //             return response.json()
-    //         }
-    //     )
-    //     .then(
-    //         pokemon => {
-    //             return console.log(pokemon)
-    //         }
-    //     )
-
+const insertPokemonsIntoPage = pokemons => {
+    const ul = document.querySelector('[data-js="pokedex"]')
+    ul.innerHTML = pokemons
 }
 
-fetchPokemon()
+
+
+const generateHTML = pokemons => pokemons.reduce((accumulator, { name, id, types }) => {
+    const elementTypes = types.map(typeInfo => typeInfo.type.name)
+
+    accumulator +=
+        `<li class="card ${elementTypes[0]}">
+        <img class="card-image " id="${id}" onclick='trocarShiny(${id})' alt="${name}" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png"  />
+            <h2 class="card-title">${id}: ${name}</h2>
+            <p class="card-Subtitle"> ${elementTypes.join(' | ')} </p>
+        </li>`
+    return accumulator
+}, '')
+
+
+
+const pokemonPromises = generatePokemonPromises()
+
+
+
+Promise.all(pokemonPromises)
+    .then(generateHTML)
+    .then(insertPokemonsIntoPage)
